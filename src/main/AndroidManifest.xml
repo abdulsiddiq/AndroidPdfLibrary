@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="pdfreader.infuturetech.com.jiopdfviewerlite">
+
+    <application>
+        <service android:name=".manipulation.progressive.ProgressiveExtractor"
+            android:exported="true"/>
+    </application>
+</manifest>
