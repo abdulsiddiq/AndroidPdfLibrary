@@ -3,6 +3,7 @@ package pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.dow
 import android.graphics.Bitmap;
 import android.graphics.pdf.PdfRenderer;
 import android.os.ParcelFileDescriptor;
+import android.util.Log;
 
 import com.glidebitmappool.GlideBitmapPool;
 
@@ -11,10 +12,12 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.ProgressiveExtractor;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.utils.PDFUtil;
 import pdfreader.infuturetech.com.jiopdfviewerlite.pdflite.pdfbox.io.MemoryUsageSetting;
 import pdfreader.infuturetech.com.jiopdfviewerlite.pdflite.pdfbox.multipdf.PDFMergerUtility;
 import pdfreader.infuturetech.com.jiopdfviewerlite.pdflite.pdfbox.pdmodel.PDDocument;
+import pdfreader.infuturetech.com.jiopdfviewerlite.pdflite.pdfbox.util.PDFResourceLoader;
 
 public class AdaptiveDocImpl implements AdaptiveDoc
 {
@@ -64,12 +67,8 @@ public class AdaptiveDocImpl implements AdaptiveDoc
     {
         try
         {
-            ParcelFileDescriptor descriptor = getDescriptor(new File(PDFUtil.getFilePath(combineId)));
+            ParcelFileDescriptor descriptor = getDescriptor(new File(PDFUtil.getFilePath(combineId)),combineId);
 
-            if(descriptor == null)
-            {
-                descriptor = getDescriptor(new File(PDFUtil.getFilePath(combineId)));
-            }
             if(descriptor == null)
             {
                 return null;
@@ -80,18 +79,26 @@ public class AdaptiveDocImpl implements AdaptiveDoc
             page.render(bm, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
 
             page.close();
+            descriptor.close();
+            PDFResourceLoader.deleteTempFIle(combineId);
             return bm;
         }catch (IOException ex)
         {
             ex.printStackTrace();
+            Log.d("pdferror","combine Id = " + combineId);
             return null;
         }
     }
 
-    private ParcelFileDescriptor getDescriptor(File file) throws IOException
+    private ParcelFileDescriptor getDescriptor(File file,String combinedId) throws IOException
     {
-        return file.exists()
-                ? ParcelFileDescriptor.open(file,ParcelFileDescriptor.MODE_READ_ONLY)
-                : null;
+        if(file.exists())
+        {
+            final FileOutputStream outputStream = PDFResourceLoader.getOutputStream(combinedId);
+            PDFUtil.fileDecryption(ProgressiveExtractor.CONTENT_KEY,file,outputStream);
+            outputStream.close();
+            return ParcelFileDescriptor.dup(PDFResourceLoader.getInputStream(combinedId).getFD());
+        }
+        return null;
     }
 }

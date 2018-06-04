@@ -8,6 +8,7 @@ import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.down
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads.document.AdaptiveDoc;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads.networks.Downloader;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads.networks.DownloaderImpl;
+import pdfreader.infuturetech.com.jiopdfviewerlite.pdflite.pdfbox.util.PDFResourceLoader;
 
 public class ProgressiveDownloadManagerImpl implements ProgressiveDownloadManager,DownloadCallbacks
 {
@@ -75,7 +76,14 @@ public class ProgressiveDownloadManagerImpl implements ProgressiveDownloadManage
     public void onDownloadError(PDFDownloadInfo info )
     {
         mDownloadInProgress = false;
-        if(info != null) startDownload();
+        if(info != null)
+        {
+            startDownload();
+        }
+        else
+        {
+            PDFResourceLoader.stopProgressiveService();
+        }
     }
 
 }

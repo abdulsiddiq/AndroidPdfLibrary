@@ -3,6 +3,7 @@ package pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.dow
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,7 +60,8 @@ public class DownloaderImpl implements Downloader
                         boolean writtenToDisk = writeResponseBodyToDisk(response.body(), item);
                         if (writtenToDisk)
                         {
-                            DBResourse.updateDownloadStatus(item, DownloadStatus.DOWNLOADED);
+//                            DBResourse.updateDownloadStatus(item, DownloadStatus.DOWNLOADED);
+                            DBResourse.removeGroup(item.pdfId);
                             _downloadCallbacks.onDownloadComplete(item);
                         } else
                         {
@@ -111,14 +113,20 @@ public class DownloaderImpl implements Downloader
                 long fileSizeDownloaded = 0;
 
                 inputStream = body.byteStream();
-                outputStream = new FileOutputStream(pdfPageFile);
+//                outputStream = new FileOutputStream(pdfPageFile);
+
+                FileOutputStream fileOutputStream = PDFResourceLoader.getOutputStream("unencrypted.pdf");
 
                 PDDocument document = PDDocument.load(inputStream,ProgressiveExtractor.CONTENT_KEY);
                 document.setAllSecurityToBeRemoved(true);
-                outputStream = new FileOutputStream(pdfPageFile);
 
-                document.save(outputStream);
+                document.save(fileOutputStream);
                 document.close();
+
+                fileOutputStream.flush();
+                fileOutputStream.close();
+                FileInputStream fileInputStream = PDFResourceLoader.getInputStream("unencrypted.pdf");
+                PDFUtil.fileEncryption(fileInputStream,pdfPageFile,ProgressiveExtractor.CONTENT_KEY);
 
                 pdfDownloadInfo.downloadUrl = pdfPageFile.getAbsolutePath();
 
@@ -138,7 +146,7 @@ public class DownloaderImpl implements Downloader
                 }
 */
 
-                outputStream.flush();
+//                outputStream.flush();
 
                 return true;
             } catch (IOException e) {

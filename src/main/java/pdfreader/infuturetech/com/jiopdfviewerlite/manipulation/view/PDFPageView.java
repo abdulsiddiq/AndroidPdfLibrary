@@ -123,7 +123,7 @@ public class PDFPageView extends RelativeLayout
                 .getDrawable());
 
         Log.d("recycle","bitmap = "+(bitmapDrawable!=null));
-        if(bitmapDrawable != null)
+        if(bitmapDrawable != null && bitmapDrawable.getBitmap() != null)
         {
 //            bitmapDrawable.getBitmap().recycle();
             GlideBitmapPool.putBitmap(bitmapDrawable.getBitmap());

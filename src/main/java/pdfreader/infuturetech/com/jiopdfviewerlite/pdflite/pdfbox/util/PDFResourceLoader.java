@@ -1,6 +1,7 @@
 package pdfreader.infuturetech.com.jiopdfviewerlite.pdflite.pdfbox.util;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.os.Environment;
 import android.util.Log;
@@ -11,6 +12,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.ProgressiveExtractor;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads.downloadutils.UserPreference;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.utils.PDFUtil;
 
@@ -127,5 +129,10 @@ public class PDFResourceLoader
     public static String getBaseUrl( String itemId)
     {
         return UserPreference.getDownloadUrl(CONTEXT,itemId);
+    }
+
+    public static void stopProgressiveService()
+    {
+        CONTEXT.stopService(new Intent(CONTEXT,ProgressiveExtractor.class));
     }
 }

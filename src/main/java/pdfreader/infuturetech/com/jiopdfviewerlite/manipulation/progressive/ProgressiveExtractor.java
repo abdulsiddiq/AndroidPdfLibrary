@@ -5,12 +5,17 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleObserver;
+import android.arch.lifecycle.OnLifecycleEvent;
+import android.arch.lifecycle.ProcessLifecycleOwner;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import java.util.EmptyStackException;
 import java.util.HashMap;
@@ -28,7 +33,7 @@ import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.down
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.utils.PDFUtil;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.view.PDFPageView;
 
-public class ProgressiveExtractor extends Service implements PageClaimer
+public class ProgressiveExtractor extends Service implements PageClaimer , LifecycleObserver
 {
 
     public static String CONTENT_KEY = "";
@@ -126,12 +131,15 @@ public class ProgressiveExtractor extends Service implements PageClaimer
     public void renderPage( String itemId, PDFPageView pageView )
     {
         String combinedId = PDFUtil.combineId(itemId,pageView.getIndex()+1);
+        Log.d("renderpdf","combined id = "+combinedId);
 //        Check if available in downloaded pdf
         Bitmap bitmap = mAdaptiveDocument.getPage(combinedId);
+
 
         if(bitmap != null)
         {
             pageView.setBitmap(bitmap);
+            return;
         }
 
 //        else add to download map
@@ -139,6 +147,8 @@ public class ProgressiveExtractor extends Service implements PageClaimer
                 UserPreference.getTotalPageCount(getApplicationContext(),itemId));
 
 //        Add as priority
+//        Remove if key is already available to rearrange the priority of the item
+        mStackKeys.remove(combinedId);
         mStackKeys.push(combinedId);
         mPagesToLoad.put(combinedId,pageView);
         if(!mDownloadManager.downloadInProgress()) mDownloadManager.startDownload();
@@ -148,6 +158,7 @@ public class ProgressiveExtractor extends Service implements PageClaimer
     public void onCreate()
     {
         super.onCreate();
+        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         DBResourse.init(getApplicationContext());
         mStackKeys = new Stack<>();
         mPagesToLoad = new HashMap<>();
@@ -218,9 +229,20 @@ public class ProgressiveExtractor extends Service implements PageClaimer
         startForeground(NOTIF_ID,notification);
     }
 
+    @OnLifecycleEvent(value = Lifecycle.Event.ON_STOP)
+    public void onAppGoBackground()
+    {
+        if(!mDownloadManager.downloadInProgress())
+        {
+            stopSelf();
+        }
+    }
+
     @Override
     public void onDestroy()
     {
         super.onDestroy();
+        mNotificationManager.cancel(NOTIF_ID);
     }
+
 }

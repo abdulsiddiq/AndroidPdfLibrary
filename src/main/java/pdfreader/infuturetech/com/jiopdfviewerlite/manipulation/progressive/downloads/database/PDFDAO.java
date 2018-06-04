@@ -38,7 +38,7 @@ public abstract class PDFDAO
     public abstract void delete( PDFDownloadInfo item );
 
     @Query("Delete from PDFDownloadInfo where grp_id Like :groupId")
-    public abstract void deleteGroup( int groupId );
+    public abstract void deleteGroup( String groupId );
 
     @Query("Delete From PDFDownloadInfo")
     public abstract void deleteAll();

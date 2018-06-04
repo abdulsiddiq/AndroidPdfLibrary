@@ -39,7 +39,7 @@ public class DBResourse
         _downloadDB.downloadDAO().deleteAll();
     }
 
-    public static void removeGroup(int groupId)
+    public static void removeGroup(String groupId)
     {
         _downloadDB.downloadDAO().deleteGroup(groupId);
     }

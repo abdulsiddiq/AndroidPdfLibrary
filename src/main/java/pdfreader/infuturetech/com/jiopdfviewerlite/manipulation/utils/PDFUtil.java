@@ -117,8 +117,16 @@ public class PDFUtil
         int len;
         byte[] obuf = null;
         while ((len = in.read(ibuf)) != -1) {
-            obuf = ci.update(ibuf, 0, len);
-            if ( obuf != null ) out.write(obuf);
+            if(len <= 1024)
+            {
+                obuf = ci.update(ibuf, 0, len);
+                if (obuf != null)
+                    out.write(obuf);
+            }
+            else
+            {
+                out.write(ibuf);
+            }
         }
         obuf = ci.doFinal();
         if ( obuf != null ) out.write(obuf);

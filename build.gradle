@@ -33,5 +33,9 @@ dependencies {
     annotationProcessor 'android.arch.persistence.room:compiler:1.0.0'
     implementation 'com.squareup.retrofit2:retrofit:2.4.0'
     implementation 'com.facebook.stetho:stetho-okhttp3:1.5.0'
+    // Lifecycle components
+    implementation "android.arch.lifecycle:extensions:$rootProject.archLifecycleVersion"
+    annotationProcessor "android.arch.lifecycle:compiler:$rootProject.archLifecycleVersion"
+
 
 }
