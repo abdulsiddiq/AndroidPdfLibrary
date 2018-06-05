@@ -5,7 +5,7 @@ import android.support.annotation.StringDef;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-@StringDef ({IntentKeys.DOWNLOAD_LINK,IntentKeys.SAVE_FILE_TO,IntentKeys.TOTAL_PAGE})
+@StringDef ({IntentKeys.DOWNLOAD_LINK,IntentKeys.SAVE_FILE_TO,IntentKeys.TOTAL_PAGE,IntentKeys.PASS})
 @Retention(RetentionPolicy.SOURCE)
 public @interface IntentKeys
 {
@@ -14,4 +14,5 @@ public @interface IntentKeys
     String TOTAL_PAGE = "tp";
     String SAVE_FILE_TO = "sft";
     String ITEM_ID = "iid";
+    String PASS = "pass";
 }

@@ -12,7 +12,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.ProgressiveExtractor;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.utils.PDFUtil;
 import pdfreader.infuturetech.com.jiopdfviewerlite.pdflite.pdfbox.io.MemoryUsageSetting;
 import pdfreader.infuturetech.com.jiopdfviewerlite.pdflite.pdfbox.multipdf.PDFMergerUtility;
@@ -63,7 +62,7 @@ public class AdaptiveDocImpl implements AdaptiveDoc
      * @return
      */
     @Override
-    public Bitmap getPage( String combineId )
+    public Bitmap getPage( String combineId,int pageWidth,int pageHeight )
     {
         try
         {
@@ -75,7 +74,7 @@ public class AdaptiveDocImpl implements AdaptiveDoc
             }
             PdfRenderer renderer = new PdfRenderer(descriptor);
             PdfRenderer.Page page = renderer.openPage(0);
-            Bitmap bm = GlideBitmapPool.getBitmap(page.getWidth(), page.getHeight(), Bitmap.Config.ARGB_8888);
+            Bitmap bm = GlideBitmapPool.getBitmap(pageWidth, pageHeight, Bitmap.Config.ARGB_8888);
             page.render(bm, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
 
             page.close();
@@ -95,7 +94,7 @@ public class AdaptiveDocImpl implements AdaptiveDoc
         if(file.exists())
         {
             final FileOutputStream outputStream = PDFResourceLoader.getOutputStream(combinedId);
-            PDFUtil.fileDecryption(ProgressiveExtractor.CONTENT_KEY,file,outputStream);
+            PDFUtil.fileDecryption(PDFResourceLoader.getPassword(combinedId),file,outputStream);
             outputStream.close();
             return ParcelFileDescriptor.dup(PDFResourceLoader.getInputStream(combinedId).getFD());
         }

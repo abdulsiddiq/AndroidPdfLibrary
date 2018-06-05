@@ -1,5 +1,8 @@
 package pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads;
 
+import android.os.HandlerThread;
+import android.os.Looper;
+import android.os.Message;
 import android.text.TextUtils;
 
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.PageClaimer;
@@ -18,10 +21,15 @@ public class ProgressiveDownloadManagerImpl implements ProgressiveDownloadManage
 
     private boolean mDownloadInProgress = false;
 
+    private DownloadHandler mHandler;
+
     public ProgressiveDownloadManagerImpl( PageClaimer pageClaimer, AdaptiveDoc adaptiveDoc ){
         mPageClaimer = pageClaimer;
         mDownloader = new DownloaderImpl(this);
         mAdaptiveDoc = adaptiveDoc;
+        HandlerThread downloadThread = new HandlerThread("downloadThread");
+        downloadThread.start();
+        mHandler = new DownloadHandler(downloadThread.getLooper());
     }
 
     @Override
@@ -30,18 +38,15 @@ public class ProgressiveDownloadManagerImpl implements ProgressiveDownloadManage
         PDFDownloadInfo[] PDFInfos = new PDFDownloadInfo[totalPages];
         for (int index = 1; index <= PDFInfos.length; index++)
         {
-            PDFInfos[index-1]  = new PDFDownloadInfo(combinedId,appendUrl);
+            PDFInfos[index - 1] = new PDFDownloadInfo(combinedId, appendUrl);
         }
-        DBResourse.insertPdf(PDFInfos);
+        mHandler.obtainMessage(DownloadHandler.ADD, PDFInfos).sendToTarget();
     }
 
     @Override
     public void startDownload()
     {
-        mDownloadInProgress = true;
-        PDFDownloadInfo item = getPriorityPdf();
-        if(item == null) item = DBResourse.itemToDownload();
-        mDownloader.download(item);
+        mHandler.obtainMessage(DownloadHandler.DOWNLAOD).sendToTarget();
     }
 
     @Override
@@ -54,7 +59,7 @@ public class ProgressiveDownloadManagerImpl implements ProgressiveDownloadManage
     public void onDownloadComplete(PDFDownloadInfo info )
     {
 //        mAdaptiveDoc.addPage(info.pdfId,info.downloadUrl);
-        mPageClaimer.claimPage(info.pdfId,mAdaptiveDoc.getPage(info.pdfId));
+        mPageClaimer.claimPage(info.pdfId);
         startDownload();
     }
 
@@ -83,6 +88,36 @@ public class ProgressiveDownloadManagerImpl implements ProgressiveDownloadManage
         else
         {
             PDFResourceLoader.stopProgressiveService();
+        }
+    }
+
+
+    private class DownloadHandler extends android.os.Handler
+    {
+        final static int ADD = 100;
+        final static int DOWNLAOD = 200;
+
+        DownloadHandler( Looper looper )
+        {
+            super(looper);
+        }
+
+        @Override
+        public void handleMessage( Message msg )
+        {
+            super.handleMessage(msg);
+            switch (msg.what)
+            {
+                case ADD:
+                    DBResourse.insertPdf((PDFDownloadInfo[]) msg.obj);
+                    break;
+                case DOWNLAOD:
+                    mDownloadInProgress = true;
+                    PDFDownloadInfo item = getPriorityPdf();
+                    if(item == null) item = DBResourse.itemToDownload();
+                    mDownloader.download(item);
+                    break;
+            }
         }
     }
 

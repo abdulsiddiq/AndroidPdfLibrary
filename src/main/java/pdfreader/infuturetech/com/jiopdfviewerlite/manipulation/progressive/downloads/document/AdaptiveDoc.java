@@ -6,5 +6,5 @@ public interface AdaptiveDoc
 {
     void addPage(String combineId,String pagePath);
 
-    Bitmap getPage( String combineId);
+    Bitmap getPage( String combineId,int pageWidth,int pageHeight);
 }

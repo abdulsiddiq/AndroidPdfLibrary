@@ -100,13 +100,13 @@ public class PDFPageView extends RelativeLayout
 
     public void setBitmap( final Bitmap bm )
     {
+        recycleBitmap();
         _pdfPage.post(new Runnable()
         {
             @Override
             public void run()
             {
 
-                recycleBitmap();
                 _pdfPage.setImageBitmap(bm);
                 if(pdfPageLoadCallbacks != null) pdfPageLoadCallbacks.loadSuccessful();
             }

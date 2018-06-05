@@ -10,7 +10,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import okhttp3.ResponseBody;
-import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.ProgressiveExtractor;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads.DownloadCallbacks;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads.DownloadStatus;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads.database.DBResourse;
@@ -117,7 +116,7 @@ public class DownloaderImpl implements Downloader
 
                 FileOutputStream fileOutputStream = PDFResourceLoader.getOutputStream("unencrypted.pdf");
 
-                PDDocument document = PDDocument.load(inputStream,ProgressiveExtractor.CONTENT_KEY);
+                PDDocument document = PDDocument.load(inputStream,PDFResourceLoader.getPassword(pdfDownloadInfo.pdfId));
                 document.setAllSecurityToBeRemoved(true);
 
                 document.save(fileOutputStream);
@@ -126,7 +125,7 @@ public class DownloaderImpl implements Downloader
                 fileOutputStream.flush();
                 fileOutputStream.close();
                 FileInputStream fileInputStream = PDFResourceLoader.getInputStream("unencrypted.pdf");
-                PDFUtil.fileEncryption(fileInputStream,pdfPageFile,ProgressiveExtractor.CONTENT_KEY);
+                PDFUtil.fileEncryption(fileInputStream,pdfPageFile,PDFResourceLoader.getPassword(pdfDownloadInfo.pdfId));
 
                 pdfDownloadInfo.downloadUrl = pdfPageFile.getAbsolutePath();
 

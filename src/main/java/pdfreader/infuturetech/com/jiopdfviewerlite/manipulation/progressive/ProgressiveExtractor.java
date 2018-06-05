@@ -13,7 +13,11 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.os.Binder;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -51,6 +55,8 @@ public class ProgressiveExtractor extends Service implements PageClaimer , Lifec
     private NotificationManager mNotificationManager;
     private String mChannelId = "22";
 
+    private ExtractorHandler mExtractorHandler;
+
     /**
      * Check in the priority stack if user has requested any page
      * @return
@@ -73,15 +79,14 @@ public class ProgressiveExtractor extends Service implements PageClaimer , Lifec
      * pdf page processed
      * @param pdfId
      * combined Id of pdf item and the page
-     * @param bitmap
-     * the bitmap of the respective pdf page
      */
     @Override
-    public void claimPage( String pdfId, Bitmap bitmap )
+    public void claimPage( String pdfId)
     {
         PDFPageView pageView = mPagesToLoad.get(pdfId);
         if(pageView != null)
         {
+            Bitmap bitmap = mAdaptiveDocument.getPage(pdfId,pageView.getPageWidth(),pageView.getPageHeight());
             pageView.setBitmap(bitmap);
         }
     }
@@ -90,13 +95,13 @@ public class ProgressiveExtractor extends Service implements PageClaimer , Lifec
     @Override
     public IBinder onBind( Intent intent )
     {
+        handleIntents(intent);
         return myBinder;
     }
 
     @Override
     public int onStartCommand( Intent intent, int flags, int startId )
     {
-        handleIntents(intent);
         return START_REDELIVER_INTENT;
     }
 
@@ -109,7 +114,8 @@ public class ProgressiveExtractor extends Service implements PageClaimer , Lifec
             String url = intent.getStringExtra(IntentKeys.DOWNLOAD_LINK);
             String baseDownloadurl = intent.getStringExtra(IntentKeys.DOWNLOAD_BASE_LINK);
             int totalPage = intent.getIntExtra(IntentKeys.TOTAL_PAGE,0);
-            UserPreference.addPdfDetails(getApplicationContext(),itemId,baseDownloadurl,url,totalPage);
+            String contentKey = intent.getStringExtra(IntentKeys.PASS);
+            UserPreference.addPdfDetails(getApplicationContext(),itemId,baseDownloadurl,url,totalPage,contentKey);
         }
         else if (IntentActions.ACTION_DOWNLOAD.equals(action))
         {
@@ -130,34 +136,16 @@ public class ProgressiveExtractor extends Service implements PageClaimer , Lifec
      */
     public void renderPage( String itemId, PDFPageView pageView )
     {
-        String combinedId = PDFUtil.combineId(itemId,pageView.getIndex()+1);
-        Log.d("renderpdf","combined id = "+combinedId);
-//        Check if available in downloaded pdf
-        Bitmap bitmap = mAdaptiveDocument.getPage(combinedId);
-
-
-        if(bitmap != null)
-        {
-            pageView.setBitmap(bitmap);
-            return;
-        }
-
-//        else add to download map
-        mDownloadManager.addToDownloads(combinedId,UserPreference.getAppendUrl(getApplicationContext(),itemId),
-                UserPreference.getTotalPageCount(getApplicationContext(),itemId));
-
-//        Add as priority
-//        Remove if key is already available to rearrange the priority of the item
-        mStackKeys.remove(combinedId);
-        mStackKeys.push(combinedId);
-        mPagesToLoad.put(combinedId,pageView);
-        if(!mDownloadManager.downloadInProgress()) mDownloadManager.startDownload();
+        mExtractorHandler.obtainMessage(100,new RenderMessageWrapper(pageView,itemId)).sendToTarget();
     }
 
     @Override
     public void onCreate()
     {
         super.onCreate();
+        HandlerThread thread = new HandlerThread("bg");
+        thread.start();
+        mExtractorHandler = new ExtractorHandler(thread.getLooper());
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         DBResourse.init(getApplicationContext());
         mStackKeys = new Stack<>();
@@ -243,6 +231,61 @@ public class ProgressiveExtractor extends Service implements PageClaimer , Lifec
     {
         super.onDestroy();
         mNotificationManager.cancel(NOTIF_ID);
+    }
+
+
+    private class ExtractorHandler extends Handler
+    {
+        ExtractorHandler( Looper looper )
+        {
+            super(looper);
+        }
+
+        @Override
+        public void handleMessage( Message msg )
+        {
+            super.handleMessage(msg);
+            RenderMessageWrapper wrapper = (RenderMessageWrapper) msg.obj;
+            renderPage(wrapper.mItemId,wrapper.mPdfPageView);
+        }
+
+        private void renderPage( String itemId, PDFPageView pageView )
+        {
+            String combinedId = PDFUtil.combineId(itemId,pageView.getIndex()+1);
+            Log.d("renderpdf","combined id = "+combinedId);
+//        Check if available in downloaded pdf
+            Bitmap bitmap = mAdaptiveDocument.getPage(combinedId,pageView.getPageWidth(),pageView.getPageHeight());
+
+
+            if(bitmap != null)
+            {
+                pageView.setBitmap(bitmap);
+                return;
+            }
+
+//        else add to download map
+            mDownloadManager.addToDownloads(combinedId,UserPreference.getAppendUrl(getApplicationContext(),itemId),
+                    UserPreference.getTotalPageCount(getApplicationContext(),itemId));
+//        Add as priority
+//        Remove if key is already available to rearrange the priority of the item
+            mStackKeys.remove(combinedId);
+            mStackKeys.push(combinedId);
+            mPagesToLoad.put(combinedId,pageView);
+            if(!mDownloadManager.downloadInProgress()) mDownloadManager.startDownload();
+        }
+
+    }
+
+    private class RenderMessageWrapper
+    {
+        PDFPageView mPdfPageView;
+        String mItemId;
+
+        RenderMessageWrapper(PDFPageView pageView,String itemId)
+        {
+            mPdfPageView = pageView;
+            mItemId = itemId;
+        }
     }
 
 }
