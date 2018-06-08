@@ -66,12 +66,13 @@ public class AdaptiveDocImpl implements AdaptiveDoc
     {
         try
         {
-            ParcelFileDescriptor descriptor = getDescriptor(new File(PDFUtil.getFilePath(combineId)),combineId);
-
+            File pdfFile = new File(PDFUtil.getFilePath(combineId));
+            ParcelFileDescriptor descriptor = getDescriptor(pdfFile,combineId);
             if(descriptor == null)
             {
                 return null;
             }
+//            PDDocument document = PDDocument.load(pdfFile);
             PdfRenderer renderer = new PdfRenderer(descriptor);
             PdfRenderer.Page page = renderer.openPage(0);
             Bitmap bm = GlideBitmapPool.getBitmap(pageWidth, pageHeight, Bitmap.Config.ARGB_8888);

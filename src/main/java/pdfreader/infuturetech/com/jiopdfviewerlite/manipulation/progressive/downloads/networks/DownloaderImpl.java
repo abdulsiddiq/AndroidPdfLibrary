@@ -50,24 +50,32 @@ public class DownloaderImpl implements Downloader
             call.enqueue(new Callback<ResponseBody>()
             {
                 @Override
-                public void onResponse( Call<ResponseBody> call, Response<ResponseBody> response )
+                public void onResponse( Call<ResponseBody> call,final Response<ResponseBody> response )
                 {
                     if (response.isSuccessful())
                     {
                         Log.d(TAG, "server contacted and has file");
-
-                        boolean writtenToDisk = writeResponseBodyToDisk(response.body(), item);
-                        if (writtenToDisk)
+                        new Thread(new Runnable()
                         {
+                            @Override
+                            public void run()
+                            {
+
+                                boolean writtenToDisk = writeResponseBodyToDisk(response.body(), item);
+                                if (writtenToDisk)
+                                {
 //                            DBResourse.updateDownloadStatus(item, DownloadStatus.DOWNLOADED);
-                            DBResourse.removeGroup(item.pdfId);
-                            _downloadCallbacks.onDownloadComplete(item);
-                        } else
-                        {
-                            _downloadCallbacks.onDownloadError(item);
-                        }
+                                    DBResourse.removeGroup(item.pdfId);
+                                    _downloadCallbacks.onDownloadComplete(item);
+                                } else
+                                {
+                                    _downloadCallbacks.onDownloadError(item);
+                                }
 
-                        Log.d(TAG, "file download was a success? " + writtenToDisk);
+                                Log.d(TAG, "file download was a success? " + writtenToDisk);
+
+                            }
+                        }).start();
                     } else
                     {
                         Log.d(TAG, "server contact failed");
@@ -93,7 +101,8 @@ public class DownloaderImpl implements Downloader
         try {
             // todo change the file location/name according to your needs
 //            Create Download Folder
-            File futureStudioIconFile = new File(PDFUtil.getDownloadFolder(PDFUtil.getItemId(pdfDownloadInfo.pdfId)));
+//            File futureStudioIconFile = new File(PDFUtil.getDownloadFolder(PDFUtil.getItemId(pdfDownloadInfo.pdfId)));
+            File futureStudioIconFile = new File(PDFResourceLoader.getFolderPath(pdfDownloadInfo.pdfId));
 
             if(!futureStudioIconFile.exists())
             {

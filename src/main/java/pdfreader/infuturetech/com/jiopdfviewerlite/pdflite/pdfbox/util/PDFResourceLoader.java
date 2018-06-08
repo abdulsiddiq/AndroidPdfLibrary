@@ -136,6 +136,12 @@ public class PDFResourceLoader
         return UserPreference.getPassword(CONTEXT, String.valueOf(PDFUtil.getItemId(combinedId)));
     }
 
+
+    public static String getFolderPath( String combinedId)
+    {
+        return UserPreference.getStoragePath(CONTEXT, String.valueOf(PDFUtil.getItemId(combinedId)));
+    }
+
     public static void stopProgressiveService()
     {
         CONTEXT.stopService(new Intent(CONTEXT,ProgressiveExtractor.class));

@@ -21,16 +21,23 @@ import android.os.Message;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EmptyStackException;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Stack;
 
 import pdfreader.infuturetech.com.jiopdfviewerlite.R;
+import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads.DownloadCallbacks;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads.IntentActions;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads.IntentKeys;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads.ProgressiveDownloadManager;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads.ProgressiveDownloadManagerImpl;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads.database.DBResourse;
+import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads.database.PDFDownloadInfo;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads.document.AdaptiveDoc;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads.document.AdaptiveDocImpl;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads.downloadutils.UserPreference;
@@ -95,34 +102,46 @@ public class ProgressiveExtractor extends Service implements PageClaimer , Lifec
     @Override
     public IBinder onBind( Intent intent )
     {
-        handleIntents(intent);
         return myBinder;
     }
 
     @Override
     public int onStartCommand( Intent intent, int flags, int startId )
     {
+        handleIntents(intent);
         return START_REDELIVER_INTENT;
     }
 
     private void handleIntents( Intent intent )
     {
         String action = intent.getAction();
-        if(IntentActions.ACTION_RENDER.equals(action))
+        String itemId = intent.getStringExtra(IntentKeys.ITEM_ID);
+        String url = intent.getStringExtra(IntentKeys.DOWNLOAD_LINK);
+        String baseDownloadurl = intent.getStringExtra(IntentKeys.DOWNLOAD_BASE_LINK);
+        int totalPage = intent.getIntExtra(IntentKeys.TOTAL_PAGE,0);
+        String contentKey = intent.getStringExtra(IntentKeys.PASS);
+        String saveTo = intent.getStringExtra(IntentKeys.SAVE_FILE_TO);
+        UserPreference.addPdfDetails(getApplicationContext(),itemId,baseDownloadurl,url,totalPage,contentKey,saveTo);
+
+        Set<String> pagesAvailable = new HashSet<>();
+        String[] pagesArray = new File(saveTo).list();
+
+        if(pagesArray != null)
         {
-            String itemId = intent.getStringExtra(IntentKeys.ITEM_ID);
-            String url = intent.getStringExtra(IntentKeys.DOWNLOAD_LINK);
-            String baseDownloadurl = intent.getStringExtra(IntentKeys.DOWNLOAD_BASE_LINK);
-            int totalPage = intent.getIntExtra(IntentKeys.TOTAL_PAGE,0);
-            String contentKey = intent.getStringExtra(IntentKeys.PASS);
-            UserPreference.addPdfDetails(getApplicationContext(),itemId,baseDownloadurl,url,totalPage,contentKey);
+            Collections.addAll(pagesAvailable, pagesArray);
         }
-        else if (IntentActions.ACTION_DOWNLOAD.equals(action))
+
+        if(action.equals(IntentActions.ACTION_DOWNLOAD))
         {
-            String itemId = intent.getStringExtra(IntentKeys.ITEM_ID);
-            String url = intent.getStringExtra(IntentKeys.DOWNLOAD_LINK);
-            int totalPage = intent.getIntExtra(IntentKeys.TOTAL_PAGE,0);
-            mDownloadManager.addToDownloads(itemId,url,totalPage);
+            ArrayList<PDFDownloadInfo> PDFInfos = new ArrayList<>();
+            for (int index = 1; index <= totalPage; index++)
+            {
+                String combinedId = PDFUtil.combineId(itemId,index);
+                if(!pagesAvailable.contains(combinedId+".pdf")) PDFInfos.add(new PDFDownloadInfo(combinedId, url));
+            }
+            PDFDownloadInfo[] arrayOfInfo = PDFInfos.toArray(new PDFDownloadInfo[0]);
+            mDownloadManager.addToDownloads(arrayOfInfo);
+            if(!mDownloadManager.downloadInProgress()) mDownloadManager.startDownload();
         }
 
     }
@@ -264,8 +283,7 @@ public class ProgressiveExtractor extends Service implements PageClaimer , Lifec
             }
 
 //        else add to download map
-            mDownloadManager.addToDownloads(combinedId,UserPreference.getAppendUrl(getApplicationContext(),itemId),
-                    UserPreference.getTotalPageCount(getApplicationContext(),itemId));
+            mDownloadManager.addToDownloads(new PDFDownloadInfo(combinedId,UserPreference.getAppendUrl(getApplicationContext(),itemId)));
 //        Add as priority
 //        Remove if key is already available to rearrange the priority of the item
             mStackKeys.remove(combinedId);
@@ -286,6 +304,12 @@ public class ProgressiveExtractor extends Service implements PageClaimer , Lifec
             mPdfPageView = pageView;
             mItemId = itemId;
         }
+    }
+
+
+    public void addProgressObserver( DownloadCallbacks callbacks )
+    {
+        mDownloadManager.addCallBackListener(callbacks);
     }
 
 }

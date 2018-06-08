@@ -8,7 +8,13 @@ import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.down
 public class UserPreference
 {
     private static final String PREF_NAME = "pn";
-    public static void addPdfDetails( Context context,String itemId, String baseDownloadUrl,String appendUrl,int totalPage,String password )
+    public static void addPdfDetails( Context context,
+                                      String itemId,
+                                      String baseDownloadUrl,
+                                      String appendUrl,
+                                      int totalPage,
+                                      String password,
+                                      String saveTo)
     {
         SharedPreferences preferences = context.getSharedPreferences(PREF_NAME,Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
@@ -16,6 +22,7 @@ public class UserPreference
         editor.putString(IntentKeys.DOWNLOAD_LINK+itemId,appendUrl);
         editor.putInt(IntentKeys.TOTAL_PAGE+itemId,totalPage);
         editor.putString(IntentKeys.PASS+itemId,password);
+        editor.putString(IntentKeys.SAVE_FILE_TO+itemId,saveTo);
         editor.apply();
     }
 
@@ -41,6 +48,12 @@ public class UserPreference
     {
         SharedPreferences preferences = context.getSharedPreferences(PREF_NAME,Context.MODE_PRIVATE);
         return preferences.getString(IntentKeys.PASS+itemId,"");
+    }
+
+    public static String getStoragePath(Context context, String itemId)
+    {
+        SharedPreferences preferences = context.getSharedPreferences(PREF_NAME,Context.MODE_PRIVATE);
+        return preferences.getString(IntentKeys.SAVE_FILE_TO+itemId,"");
     }
 
 }
