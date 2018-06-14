@@ -139,12 +139,24 @@ public class PDFResourceLoader
 
     public static String getFolderPath( String combinedId)
     {
-        return UserPreference.getStoragePath(CONTEXT, String.valueOf(PDFUtil.getItemId(combinedId)));
+        return getFolderPath(combinedId,true);
+    }
+
+    /**
+     * Returns the path of the folder to which the pdfs are downloaded to
+     * @param id
+     * @param combinedId
+     * @return
+     */
+    public static String getFolderPath( String id ,boolean combinedId)
+    {
+        return UserPreference.getStoragePath(CONTEXT, combinedId
+                ? String.valueOf(PDFUtil.getItemId(id))
+                : id);
     }
 
     public static void stopProgressiveService()
     {
         boolean isStopped = CONTEXT.stopService(new Intent(CONTEXT,ProgressiveExtractor.class));
-        Log.d("services","is stopped "+isStopped);
     }
 }

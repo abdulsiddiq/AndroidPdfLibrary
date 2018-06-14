@@ -1,7 +1,8 @@
 package pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads;
 
 import android.text.TextUtils;
-import android.util.Log;
+
+import java.io.File;
 
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.PageClaimer;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads.database.DBResourse;
@@ -57,6 +58,14 @@ public class ProgressiveDownloadManagerImpl implements ProgressiveDownloadManage
     }
 
     @Override
+    public void cancelDownload( String itemId )
+    {
+        DBResourse.removeGroup(itemId);
+        //            Create Download Folder
+        File futureStudioIconFile = new File(PDFResourceLoader.getFolderPath(pdfDownloadInfo.pdfId));
+    }
+
+    @Override
     public void onDownloadComplete(PDFDownloadInfo info )
     {
         if(_downloadListeners != null) _downloadListeners.onDownloadComplete(info);
@@ -90,7 +99,6 @@ public class ProgressiveDownloadManagerImpl implements ProgressiveDownloadManage
         else
         {
             PDFResourceLoader.stopProgressiveService();
-            Log.d("donwload","stop service called");
         }
     }
 

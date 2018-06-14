@@ -7,7 +7,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
 import okhttp3.ResponseBody;
 import pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.progressive.downloads.DownloadCallbacks;
@@ -64,7 +63,6 @@ public class DownloaderImpl implements Downloader
                                 boolean writtenToDisk = writeResponseBodyToDisk(response.body(), item);
                                 if (writtenToDisk)
                                 {
-//                            DBResourse.updateDownloadStatus(item, DownloadStatus.DOWNLOADED);
                                     DBResourse.removeGroup(item.pdfId);
                                     _downloadCallbacks.onDownloadComplete(item);
                                 } else
@@ -98,10 +96,8 @@ public class DownloaderImpl implements Downloader
     }
 
     private boolean writeResponseBodyToDisk(ResponseBody body,PDFDownloadInfo pdfDownloadInfo) {
-        try {
             // todo change the file location/name according to your needs
 //            Create Download Folder
-//            File futureStudioIconFile = new File(PDFUtil.getDownloadFolder(PDFUtil.getItemId(pdfDownloadInfo.pdfId)));
             File futureStudioIconFile = new File(PDFResourceLoader.getFolderPath(pdfDownloadInfo.pdfId));
 
             if(!futureStudioIconFile.exists())
@@ -111,21 +107,11 @@ public class DownloaderImpl implements Downloader
 
             File pdfPageFile = new File(futureStudioIconFile,pdfDownloadInfo.pdfId+".pdf");
 
-            InputStream inputStream = null;
-            OutputStream outputStream = null;
+            try (InputStream inputStream = body.byteStream())
+            {
+                FileOutputStream fileOutputStream = PDFResourceLoader.getOutputStream(PDFUtil.UNENCRY_FILE_NAME);
 
-            try {
-                byte[] fileReader = new byte[4096];
-
-                long fileSize = body.contentLength();
-                long fileSizeDownloaded = 0;
-
-                inputStream = body.byteStream();
-//                outputStream = new FileOutputStream(pdfPageFile);
-
-                FileOutputStream fileOutputStream = PDFResourceLoader.getOutputStream("unencrypted.pdf");
-
-                PDDocument document = PDDocument.load(inputStream,PDFResourceLoader.getPassword(pdfDownloadInfo.pdfId));
+                PDDocument document = PDDocument.load(inputStream, PDFResourceLoader.getPassword(pdfDownloadInfo.pdfId));
                 document.setAllSecurityToBeRemoved(true);
 
                 document.save(fileOutputStream);
@@ -133,43 +119,15 @@ public class DownloaderImpl implements Downloader
 
                 fileOutputStream.flush();
                 fileOutputStream.close();
-                FileInputStream fileInputStream = PDFResourceLoader.getInputStream("unencrypted.pdf");
-                PDFUtil.fileEncryption(fileInputStream,pdfPageFile,PDFResourceLoader.getPassword(pdfDownloadInfo.pdfId));
+                FileInputStream fileInputStream = PDFResourceLoader.getInputStream(PDFUtil.UNENCRY_FILE_NAME);
+                PDFUtil.fileEncryption(fileInputStream, pdfPageFile, PDFResourceLoader.getPassword(pdfDownloadInfo.pdfId));
 
                 pdfDownloadInfo.downloadUrl = pdfPageFile.getAbsolutePath();
-
-/*
-                while (true) {
-                    int read = inputStream.read(fileReader);
-
-                    if (read == -1) {
-                        break;
-                    }
-
-                    outputStream.write(fileReader, 0, read);
-
-                    fileSizeDownloaded += read;
-
-                    Log.d(TAG, "file download: " + fileSizeDownloaded + " of " + fileSize);
-                }
-*/
-
-//                outputStream.flush();
 
                 return true;
             } catch (IOException e) {
                 return false;
-            } finally {
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-
-                if (outputStream != null) {
-                    outputStream.close();
-                }
             }
-        } catch (IOException e) {
-            return false;
-        }
+
     }
 }

@@ -36,6 +36,9 @@ public class PDFUtil
     public static final int IO_BUFFER_SIZE = 8 * 1024;
     public static final String ID_SEPERATOR = ":";
     public static final String PATH_SEPERATOR = "/";
+    public static final String FILE_TYPE = ".pdf";
+
+    public static final String UNENCRY_FILE_NAME = "unencrypted"+ FILE_TYPE;
 
     public static void fileProcessor( int cipherMode, String key, byte[] inputBytes, File outputFile )
     {

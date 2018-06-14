@@ -11,4 +11,6 @@ public interface ProgressiveDownloadManager
     boolean downloadInProgress();
 
     void addCallBackListener(DownloadCallbacks callbacks);
+
+    void cancelDownload(String itemId);
 }

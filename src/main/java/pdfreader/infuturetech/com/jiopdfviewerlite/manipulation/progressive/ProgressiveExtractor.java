@@ -261,6 +261,11 @@ public class ProgressiveExtractor extends Service implements PageClaimer , Lifec
     }
 
 
+    public void cancelDownload(String itemId)
+    {
+        mDownloadManager.cancelDownload(itemId);
+    }
+
     private class ExtractorHandler extends Handler
     {
         ExtractorHandler( Looper looper )
