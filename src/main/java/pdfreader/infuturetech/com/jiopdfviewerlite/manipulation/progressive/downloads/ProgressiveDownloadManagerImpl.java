@@ -37,6 +37,7 @@ public class ProgressiveDownloadManagerImpl implements ProgressiveDownloadManage
     @Override
     public void startDownload()
     {
+        mPageClaimer.onDownloadStart();
         mDownloadInProgress = true;
         PDFDownloadInfo item = getPriorityPdf();
         if(item == null) item = DBResourse.itemToDownload();
@@ -83,6 +84,7 @@ public class ProgressiveDownloadManagerImpl implements ProgressiveDownloadManage
         mDownloadInProgress = false;
         if(info != null)
         {
+            DBResourse.removeGroup(info.pdfId);
             startDownload();
         }
         else

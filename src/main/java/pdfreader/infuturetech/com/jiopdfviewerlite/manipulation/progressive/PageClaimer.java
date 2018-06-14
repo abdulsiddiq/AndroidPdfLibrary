@@ -5,4 +5,6 @@ public interface PageClaimer
     String popKey();
 
     void claimPage( String pdfId);
+
+    void onDownloadStart();
 }

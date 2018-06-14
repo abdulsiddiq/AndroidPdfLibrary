@@ -144,6 +144,7 @@ public class PDFResourceLoader
 
     public static void stopProgressiveService()
     {
-        CONTEXT.stopService(new Intent(CONTEXT,ProgressiveExtractor.class));
+        boolean isStopped = CONTEXT.stopService(new Intent(CONTEXT,ProgressiveExtractor.class));
+        Log.d("services","is stopped "+isStopped);
     }
 }

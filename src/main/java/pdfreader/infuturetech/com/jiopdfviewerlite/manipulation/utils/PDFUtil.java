@@ -209,9 +209,37 @@ public class PDFUtil
         return Integer.parseInt(combinedId.split(ID_SEPERATOR)[1]);
     }
 
+    /**
+     * This method is used to make the combined id of itemd id and index so that
+     * at any given time we can access the itemid and the page index at any given time
+     * @param itemId
+     * unique id of the pdf
+     * @param idToCombine
+     * this is the page index of the pdf
+     * @return
+     * combines the id by appending the {@link this#ID_SEPERATOR}
+     */
     public static String combineId(String itemId, int idToCombine)
     {
-        return itemId+ID_SEPERATOR+idToCombine;
+        return combineId(itemId,idToCombine,0);
+    }
+
+    /**
+     * This method is used to make the combined id of itemd id and index so that
+     * at any given time we can access the itemid and the page index at any given time
+     * @param itemId
+     * unique id of the pdf
+     * @param idToCombine
+     * this is the page index of the pdf
+     * @param increaseIndexCountBy
+     * for app who stores page index from other than 0 example if page number starts from 1 then
+     * this param value must be 1 else by default 0
+     * @return
+     * combines the id by appending the {@link this#ID_SEPERATOR}
+     */
+    public static String combineId(String itemId, int idToCombine, int increaseIndexCountBy)
+    {
+        return itemId +ID_SEPERATOR + (idToCombine+increaseIndexCountBy) ;
     }
 
     public static String getDownloadFolder(int itemId)

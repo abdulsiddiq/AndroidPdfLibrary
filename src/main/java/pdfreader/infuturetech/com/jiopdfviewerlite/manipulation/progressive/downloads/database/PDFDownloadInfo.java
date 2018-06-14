@@ -41,6 +41,13 @@ public class PDFDownloadInfo
         return this.downloadUrl;
     }
 
+    /**
+     * This will be a combination of item id and the page number
+     * To get item id or page number use the API
+     * {@link pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.utils.PDFUtil#getItemId(String)}
+     * or
+     * {@link pdfreader.infuturetech.com.jiopdfviewerlite.manipulation.utils.PDFUtil#getIndexFrom(String)}
+     */
     public String getGroupId()
     {
         return this.pdfId;

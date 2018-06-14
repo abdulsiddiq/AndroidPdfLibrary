@@ -107,9 +107,9 @@ public class PDFDocumentsHandler extends Handler
 
             if (_currentDocument != null)
             {
-
+                Log.e("PDF page index ", pageIndex + "");
                 PdfRenderer.Page page = _currentDocument.openPage(pageIndex);
-                Bitmap bm = GlideBitmapPool.getDirtyBitmap(Math.round(pageToSet.getPageWidth()), Math.round(pageToSet.getPageHeight()), Bitmap.Config.ARGB_8888);
+                Bitmap bm = GlideBitmapPool.getBitmap(Math.round(pageToSet.getPageWidth()), Math.round(pageToSet.getPageHeight()), Bitmap.Config.ARGB_8888);
                 page.render(bm, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
 
                 page.close();

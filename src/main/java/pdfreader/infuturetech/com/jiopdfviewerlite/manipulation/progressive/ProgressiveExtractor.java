@@ -10,7 +10,6 @@ import android.arch.lifecycle.LifecycleObserver;
 import android.arch.lifecycle.OnLifecycleEvent;
 import android.arch.lifecycle.ProcessLifecycleOwner;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.os.Binder;
 import android.os.Handler;
@@ -19,7 +18,6 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -51,7 +49,7 @@ public class ProgressiveExtractor extends Service implements PageClaimer , Lifec
 
     HashMap<String,PDFPageView> mPagesToLoad;
     Stack<String> mStackKeys;
-    public static final int NOTIF_ID = 500;
+    public static final int NOTIF_ID = 5;
 
     private IBinder myBinder = new ExtractorBinder();
 
@@ -96,6 +94,12 @@ public class ProgressiveExtractor extends Service implements PageClaimer , Lifec
             Bitmap bitmap = mAdaptiveDocument.getPage(pdfId,pageView.getPageWidth(),pageView.getPageHeight());
             pageView.setBitmap(bitmap);
         }
+    }
+
+    @Override
+    public void onDownloadStart()
+    {
+        showNotification();
     }
 
     @Nullable
@@ -181,12 +185,7 @@ public class ProgressiveExtractor extends Service implements PageClaimer , Lifec
         }
 
         showNotification();
-    }
 
-    @Override
-    public void unbindService( ServiceConnection conn )
-    {
-        super.unbindService(conn);
     }
 
 
@@ -200,8 +199,9 @@ public class ProgressiveExtractor extends Service implements PageClaimer , Lifec
 
     public void removePage(String itemId, PDFPageView pageView)
     {
-        mStackKeys.remove(pageView);
-        mPagesToLoad.remove(PDFUtil.combineId(itemId,pageView.getIndex()));
+        String combinedId = PDFUtil.combineId(itemId,pageView.getIndex());
+        mStackKeys.remove(combinedId);
+        mPagesToLoad.remove(combinedId);
     }
 
 
@@ -226,7 +226,7 @@ public class ProgressiveExtractor extends Service implements PageClaimer , Lifec
             builder = new Notification.Builder(getApplicationContext());
         }
         Notification notification  = builder.setContentTitle(getString(R.string.app_name))
-                .setContentText("Extractor Service")
+                .setContentText("Download in Progress")
                 .setSmallIcon(R.drawable.placeholder)
                 .setWhen(System.currentTimeMillis())
                 .setContentIntent(contentIntent)
@@ -243,6 +243,14 @@ public class ProgressiveExtractor extends Service implements PageClaimer , Lifec
         {
             stopSelf();
         }
+    }
+
+
+    @Override
+    public void onLowMemory()
+    {
+        super.onLowMemory();
+        stopSelf();
     }
 
     @Override
@@ -270,8 +278,8 @@ public class ProgressiveExtractor extends Service implements PageClaimer , Lifec
 
         private void renderPage( String itemId, PDFPageView pageView )
         {
+
             String combinedId = PDFUtil.combineId(itemId,pageView.getIndex()+1);
-            Log.d("renderpdf","combined id = "+combinedId);
 //        Check if available in downloaded pdf
             Bitmap bitmap = mAdaptiveDocument.getPage(combinedId,pageView.getPageWidth(),pageView.getPageHeight());
 
